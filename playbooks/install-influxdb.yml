@@ -5,7 +5,7 @@
   remote_user: ansible
 
   tasks:
-  - name: Create conf dir for telegraf
+  - name: Create conf dir for influddb 
     command: "mkdir -p /etc/influxdb/"
 
   - name: Copy telegraf and influxdb rpm repo to node2

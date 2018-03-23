@@ -123,6 +123,36 @@ in the cluster.
 ansible-playbook playbooks/keyscan.yml
 ```
 
+### Install Spark Servers, prerequisites, and TICK stack
+
+```bash
+# Install Java JDK and command line utils
+ansible-playbook playbooks/yum-nodes.yml
+# Install the Spark master node on node0
+ansible-playbook playbooks/install-spark-master.yml
+# Install the Spark slave nodes on node1 and node2
+ansible-playbook playbooks/install-spark-slave.yml
+# Install the Spark history job server on node0
+ansible-playbook playbooks/install-spark-history.yml
+# Install the telegraf on all nodes but statsD input on node1
+ansible-playbook playbooks/install-telegraf.yml
+# Configure Spark Metrics system to output to systemd
+ansible-playbook playbooks/configure-metrics.yml
+# Install the influxdb and chronograf on node2
+ansible-playbook playbooks/install-influxdb.yml
+```
+
+### Setup Chronograf
+
+Go to Chronograf http://node2:8888
+
+* Set `Connection String` to http://node2:8086
+* Set `Name` to Spark
+* Leaver UserName and Password blank (you would need to set this in influxdb.conf)
+* Set `Telegraf Database` to spark
+* Click `Add Connection`
+* Create a dashboard and add desired metrics to it
+
 
 ## Spark server layout
 
@@ -338,8 +368,20 @@ Run SparkPageRank example with enable log true (for history server).
   --master spark://node0:7077 \
   --conf spark.eventLog.enabled=true \
   /opt/spark/examples/jars/spark-examples_2.11-2.3.0.jar \
-  /opt/spark/data/mllib/pagerank_data.txt 20
+  /opt/spark/data/mllib/pagerank_data.txt 20 &
 ```
+
+```bash
+
+/opt/spark/bin/spark-submit \
+  --class org.apache.spark.examples.SparkPageRank \
+  --master spark://node0:6066 \
+  --deploy-mode cluster \
+  --conf spark.eventLog.enabled=true \
+  /opt/spark/examples/jars/spark-examples_2.11-2.3.0.jar \
+  /opt/spark/data/mllib/pagerank_data.txt 20 &
+```
+
 
 ## Spark Job History Server
 With the Spark Job History server we can track metrics like:
