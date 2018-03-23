@@ -1,4 +1,37 @@
-## Set up cluster
+## Set up Spark cluster
+
+Sample spark cluster, that uses systemd, ansible, centos7, influxdb, statsd, spark metrics system, spark job server and more.
+
+This projects includes template done in Vagrant and Ansible.
+
+You should be able to take this and apply it to your server machines quickly.
+
+The OS is Centos7 which seems like de facto.
+
+ The templates and scripts install Spark, Java, configures spark metrics system, spark job history server, ansible, influxdb, telegraf, chronograf and statsd.
+
+With chronograf, it is easy to setup metrics dashboards too. You could also
+set up grafana to display metrics.
+
+Metrics are available via the InfluxDB rest API and the Spark metric system REST API.
+
+It would be easy to write an adapter to send metrics to a custom metric system. Between InfluxDB and Telegraf, most industry standard metric outputs and metric inputs are available.
+
+The metrics are rich and plentiful enough to find and track any problems with a Spark system.
+
+Ansible can be run against real servers as long as you have ssh access. There
+are examples installing keys and setting up ssh/ansible.
+
+The trick is automating the system so you can set it up quickly.
+
+To facilitate set up, we use Vagrant.
+
+Vagrant, ansible, etc. are all installable via brew.
+
+
+## Setting up your cluster.
+
+Install ansible and vagrant.
 
 ### Set up keys for ssh
 
