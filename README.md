@@ -24,27 +24,56 @@ are examples installing keys and setting up ssh/ansible.
 
 The trick is automating the system so you can set it up quickly.
 
-To facilitate set up, we use Vagrant.
+To facilitate set up, we use Vagrant. Whenever possible, we use systemd.
 
 Vagrant, ansible, etc. are all installable via brew.
 
+Note we use Vagrant to do local testing. For EC2 or other clouds we would use Terraform instead.
 
-## Setting up your cluster.
 
-Install ansible and vagrant.
+## Setting up your spark cluster with metrics
 
-### Set up keys for ssh
+
+### Install ansible and vagrant.
+
+#### installing vagrant
+```
+$ brew cask install virtualbox
+$ brew cask install vagrant
+```
+
+See [install vagrant with brew for more details](http://sourabhbajaj.com/mac-setup/Vagrant/README.html).
+
+#### installing ansible
+
+```
+$ brew install ansible
+```
+
+### Set up keys for ssh for spark cluster
+
+We generate keys for using ssh and ansible.  
 
 ```bash
 bin/gen-key.sh
 ```
-### Run download.sh
+
+### Run download.sh to download spark.
+
+We have a script that downloads spark.
+You can customize this script to download a different version of spark.
 
 ```bash
 bin/download.sh
 ```
 
-### Run vagrant up
+The download uses this [spark dist](
+http://apache.spinellicreations.com/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz), you are free to change it.
+
+
+### Run vagrant up to bring up the spark cluster
+
+Vagrant up will bring up all of the server.
 
 ```bash
 vagrant up
@@ -52,11 +81,17 @@ vagrant up
 
 ### Add keys to your auth known_hosts
 
-```
+After you bring up the servers, you can use `ssh-keyscan` to avoid any issues
+with `known_hosts` when using `ansible`.
+
+#### Add known_hosts to avoid ansible issues.
+```bash
 ssh-keyscan node0 node1 node2  bastion > ~/.ssh/known_hosts
 ```
 
-### Ensure they are up
+### Ensure all of the servers are up
+
+You can use the ansible ping module to ensure the servers are up.
 
 ```
 ansible all  -m ping
@@ -79,22 +114,29 @@ bastion | SUCCESS => {
 
 ```
 
-### Add keys to nodes
+### Add keys to the spark nodes
 
-```
+You can add keys to all of the nodes so you can ssh into them from other nodes
+in the cluster.
+
+```bash
 ansible-playbook playbooks/keyscan.yml
 ```
 
-## Installing Spark
-http://apache.spinellicreations.com/spark/spark-2.3.0/spark-2.3.0-bin-hadoop2.7.tgz
 
-###  Untar it
 
-```
+## Install notes
+
+This section is not anything you have to do, it is what the above scripts did to install this cluster.
+
+
+### We use Untar to untar the spark distro
+
+```bash
 tar xvzf spark.tgz
 ```
 
-### Install it
+### Install directory
 
 To install spark we do this.
 
@@ -106,8 +148,6 @@ ls /opt/spark/
 
 See [spark standalone set up for more details](https://spark.apache.org/docs/latest/spark-standalone.html).
 
-
-
 Next we want to edit the  `/opt/spark/conf/spark-env.sh` (see spark-env.sh.template)
 
 ```
@@ -116,8 +156,10 @@ SPARK_PUBLIC_DNS=node2
 SPARK_MASTER_HOST=node2
 ```
 
+The above is automated with ansible and jinja.
 
-#### Run the master
+
+#### To run the master
 
 Then we can run the master.
 
@@ -126,6 +168,8 @@ Then we can run the master.
 /opt/spark/sbin/start-master.sh
 
 ```
+
+Note we run the master via ansible and systemd.
 
 
 
@@ -198,7 +242,7 @@ node1
 To visualize the DAGS and see job / worker/ application metrics, we will want the [spark job history server](https://jaceklaskowski.gitbooks.io/mastering-apache-spark/content/spark-history-server.html).
 
 
-### Running a job
+## Running jobs to see / generate metrics
 
 To see metrics, we will want to run some jobs.
 
@@ -224,10 +268,16 @@ Run SparkPageRank example with enable log true (for history server).
   /opt/spark/data/mllib/pagerank_data.txt 20
 ```
 
+## Spark Job History Server
 With the Spark Job History server we can track metrics like:
 
+You run the history server using this command.
 
-Should be easy to track time for serialization
+```bash
+ /opt/spark/sbin/start-history-server.sh
+```
+
+With the history server running, it should be easy to track time for serialization, scheduler and more.
 
 * Scheduler Delay
 * Task Deserialization Time
