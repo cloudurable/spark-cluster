@@ -5,9 +5,10 @@ set -e
 KEY_NAME=spark
 
 mkdir -p resources/server/certs
+touch ~/.ssh/${KEY_NAME}_rsa.pub
+touch ~/.ssh/${KEY_NAME}_rsa
 rm ~/.ssh/${KEY_NAME}_rsa.pub
 rm ~/.ssh/${KEY_NAME}_rsa
-
 
 rm -f "$PWD/resources/server/certs/${KEY_NAME}_rsa"
 rm -f "$PWD/resources/server/certs/${KEY_NAME}_rsa.pub"

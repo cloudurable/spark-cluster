@@ -49,8 +49,15 @@ See [install vagrant with brew for more details](http://sourabhbajaj.com/mac-set
 
 #### installing ansible
 
-```
+```bash
 $ brew install ansible
+```
+
+### Pull this project down from github
+
+```bash
+$ git clone https://github.com/cloudurable/spark-cluster.git
+$ cd spark-cluster
 ```
 
 ### Set up keys for ssh for spark cluster
@@ -87,6 +94,25 @@ vagrant up
 After you bring up the servers, you can use `ssh-keyscan` to avoid any issues
 with `known_hosts` when using `ansible`.
 
+
+In order for that keyscan to work, you need the hostnames for the cluster in your /etc/hosts file as follows:
+
+
+#### Add nodes to your /etc/hosts file for connivence.
+```bash
+cat >> /etc/hosts <<EOL
+
+192.168.50.20  bastion
+
+192.168.50.4  node0
+192.168.50.5  node1
+192.168.50.6  node2
+192.168.50.7  node3
+192.168.50.8  node4
+192.168.50.9  node5
+EOL
+```
+
 #### Add known_hosts to avoid ansible issues.
 ```bash
 ssh-keyscan node0 node1 node2  bastion > ~/.ssh/known_hosts
@@ -116,6 +142,9 @@ bastion | SUCCESS => {
 }
 
 ```
+
+Ignore any errors you see from bastion. It is place holder.
+
 
 ### Add keys to the spark nodes
 
@@ -235,13 +264,13 @@ ls /opt/spark/logs/
 This section is not anything you have to do, it is what the above scripts did to install this cluster.
 
 
-### We use Untar to untar the spark distro
+### Notes: We use Untar to untar the spark distro
 
 ```bash
 tar xvzf spark.tgz
 ```
 
-### Install directory
+### Spark Install directory
 
 To install spark we do this.
 
@@ -250,6 +279,7 @@ mkdir -p /opt/
 mv spark-2.3.0-bin-hadoop2.7/ /opt/spark
 ls /opt/spark/
 ```
+This is done by an ansible playbook.
 
 See [spark standalone set up for more details](https://spark.apache.org/docs/latest/spark-standalone.html).
 
@@ -264,7 +294,7 @@ SPARK_MASTER_HOST=node2
 The above is automated with ansible and jinja.
 
 
-#### To run the master
+#### Notes: To run the master
 
 Then we can run the master.
 
@@ -306,7 +336,7 @@ URL: spark://localhost:7077
 REST URL: spark://localhost:6066 (cluster mode)
 ```
 
-## Log into another node
+## Notes Log into another node
 
 Install Spark here.
 
@@ -316,7 +346,7 @@ Connect a worker to the master.
 /opt/spark/sbin/start-slave.sh spark://192.168.50.6:7077
 ```
 
-## Slaves file
+## Notes Slaves file
 
 ```
 
@@ -387,13 +417,15 @@ Run SparkPageRank example with enable log true (for history server).
 
 
 ## Spark Job History Server
-With the Spark Job History server we can track metrics like:
+With the Spark Job History server we can track metrics.
 
 You run the history server using this command.
 
 ```bash
  /opt/spark/sbin/start-history-server.sh
 ```
+
+We install this with an ansible playbook.
 
 With the history server running, it should be easy to track time for serialization, scheduler and more.
 
@@ -751,8 +783,443 @@ https://github.com/influxdata/telegraf/blob/release-1.5/plugins/inputs/system/ME
 System
 https://github.com/influxdata/telegraf/blob/release-1.5/plugins/inputs/system/SYSTEM_README.md
 
+#### telegraf.conf
+
+```bash
+
+[agent]
+  interval = "10s"
+  round_interval = true
+  metric_batch_size = 100
+  metric_buffer_limit = 400
+  collection_jitter = "0s"
+  flush_jitter = "0s"
+  precision = ""
+  debug = true
+  quiet = false
+  logfile = "/var/log/telegraf/debug.log"
+
+# See https://github.com/influxdata/telegraf/tree/master/plugins/inputs/statsd
+
+[[outputs.file]]
+    files = ["stdout", "/var/log/telegraf/metrics.log" ]
 
 
+# see https://github.com/influxdata/telegraf/tree/master/plugins/outputs/influxdb
+
+# Configuration for influxdb server to send metrics to
+[[outputs.influxdb]]
+  urls = ["udp://node2:8089"]
+  database = "spark"
+  retention_policy = ""
+  write_consistency = "any"
+
+# Statsd Server input
+[[inputs.statsd]]
+  protocol = "udp"
+  service_address = "localhost:8125"
+  delete_gauges = true
+  delete_counters = true
+  delete_sets = true
+  delete_timings = true
+  percentiles = [90,95,99]
+  metric_separator = "_"
+  parse_data_dog_tags = false
+  allowed_pending_messages = 10000
+  percentile_limit = 1000
+
+# Read metrics about disk usage by mount point
+[[inputs.disk]]
+    # Setting mountpoints will restrict the stats to the specified mountpoints.
+    # mount_points = ["/"]
+
+[[inputs.diskio]]
+    ## Setting devices will restrict the stats to the specified devices.
+    # devices = ["sda", "sdb"]
+
+[[inputs.cpu]]
+    ## Whether to report per-cpu stats or not
+    percpu = true
+    ## Whether to report total system cpu stats or not
+    totalcpu = true
+    ## If true, collect raw CPU time metrics.
+    collect_cpu_time = true
+    ## If true, compute and report the sum of all non-idle CPU states.
+    report_active = false
+    # Read metrics about memory usage
+
+# Read metrics about memory usage
+[[inputs.mem]]
+    # no configuration
+
+# Read metrics about system load & uptime
+[[inputs.system]]
+    # no configuration
+
+# Gather metrics about network interfaces
+[[inputs.net]]
+  ## By default, telegraf gathers stats from any up interface (excluding loopback)
+  ## Setting interfaces will tell it to gather these explicit interfaces,
+  ## regardless of status. When specifying an interface, glob-style
+  ## patterns are also supported.
+  ##
+  # interfaces = ["eth*", "enp0s[0-1]", "lo"]
+  ##
+
+[[inputs.netstat]]
+
+# Get kernel statistics from /proc/stat
+[[inputs.kernel]]
+  # no configuration
+
+[[inputs.linux_sysctl_fs]]
+
+```
+
+The above telegraf setup captures most of the important operating systems bits.
+
+
+
+Telegraf also has a statsD input which we use.
+We send the Spark Metrics to the Telegraf input.
+Then all of the OS metrics and the statsD Spark metrics go into InfluxDB.
+
+The InfluxDB configuration is as follows:
+
+#### influxdb.conf
+
+```bash
+
+[meta]
+  # Where the metadata/raft database is stored
+  dir = "/var/lib/influxdb/meta"
+
+[data]
+  # The directory where the TSM storage engine stores TSM files.
+  dir = "/var/lib/influxdb/data"
+
+  # The directory where the TSM storage engine stores WAL files.
+  wal-dir = "/var/lib/influxdb/wal"
+
+  # Trace logging provides more verbose output around the tsm engine. Turning
+  # this on can provide more useful output for debugging tsm engine issues.
+  trace-logging-enabled = true
+
+  # Whether queries should be logged before execution. Very useful for troubleshooting, but will
+  # log any sensitive data contained within a query.
+  query-log-enabled = true
+
+  # Settings for the TSM engine
+
+  # CacheMaxMemorySize is the maximum size a shard's cache can
+  # reach before it starts rejecting writes.
+  # Valid size suffixes are k, m, or g (case insensitive, 1024 = 1k).
+  # Vaues without a size suffix are in bytes.
+  # cache-max-memory-size = "1g"
+
+  # CacheSnapshotMemorySize is the size at which the engine will
+  # snapshot the cache and write it to a TSM file, freeing up memory
+  # Valid size suffixes are k, m, or g (case insensitive, 1024 = 1k).
+  # Values without a size suffix are in bytes.
+  # cache-snapshot-memory-size = "25m"
+
+  # CacheSnapshotWriteColdDuration is the length of time at
+  # which the engine will snapshot the cache and write it to
+  # a new TSM file if the shard hasn't received writes or deletes
+  # cache-snapshot-write-cold-duration = "10m"
+
+  # CompactFullWriteColdDuration is the duration at which the engine
+  # will compact all TSM files in a shard if it hasn't received a
+  # write or delete
+  # compact-full-write-cold-duration = "4h"
+
+  # The maximum number of concurrent full and level compactions that can run at one time.  A
+  # value of 0 results in 50% of runtime.GOMAXPROCS(0) used at runtime.  Any number greater
+  # than 0 limits compactions to that value.  This setting does not apply
+  # to cache snapshotting.
+  # max-concurrent-compactions = 0
+
+  # The maximum series allowed per database before writes are dropped.  This limit can prevent
+  # high cardinality issues at the database level.  This limit can be disabled by setting it to
+  # 0.
+  # max-series-per-database = 1000000
+
+  # The maximum number of tag values per tag that are allowed before writes are dropped.  This limit
+  # can prevent high cardinality tag values from being written to a measurement.  This limit can be
+  # disabled by setting it to 0.
+  # max-values-per-tag = 100000
+
+###
+### [retention]
+###
+### Controls the enforcement of retention policies for evicting old data.
+###
+
+[retention]
+  # Determines whether retention policy enforcement enabled.
+  enabled = true
+
+  # The interval of time when retention policy enforcement checks run.
+  check-interval = "30m"
+
+###
+### Controls the system self-monitoring, statistics and diagnostics.
+###
+### The internal database for monitoring data is created automatically if
+### if it does not already exist. The target retention within this database
+### is called 'monitor' and is also created with a retention period of 7 days
+### and a replication factor of 1, if it does not exist. In all cases the
+### this retention policy is configured as the default for the database.
+
+[monitor]
+  # Whether to record statistics internally.
+  store-enabled = true
+
+  # The destination database for recorded statistics
+  store-database = "_internal"
+
+  # The interval at which to record statistics
+  store-interval = "10s"
+
+###
+### [http]
+###
+### Controls how the HTTP endpoints are configured. These are the primary
+### mechanism for getting data into and out of InfluxDB.
+###
+
+[http]
+  # Determines whether HTTP endpoint is enabled.
+  enabled = true
+
+  # The bind address used by the HTTP service.
+  bind-address = ":8086"
+
+  # Determines whether user authentication is enabled over HTTP/HTTPS.
+  auth-enabled = false
+
+  # The default realm sent back when issuing a basic auth challenge.
+  realm = "InfluxDB"
+
+  # Determines whether HTTP request logging is enabled.
+  log-enabled = true
+
+  # When HTTP request logging is enabled, this option specifies the path where
+  # log entries should be written. If unspecified, the default is to write to stderr, which
+  # intermingles HTTP logs with internal InfluxDB logging.
+  #
+  # If influxd is unable to access the specified path, it will log an error and fall back to writing
+  # the request log to stderr.
+  access-log-path = ""
+
+  # Determines whether detailed write logging is enabled.
+  write-tracing = false
+
+  # Determines whether the pprof endpoint is enabled.  This endpoint is used for
+  # troubleshooting and monitoring.
+  # pprof-enabled = true
+
+  # Determines whether HTTPS is enabled.
+  https-enabled = false
+
+  # The SSL certificate to use when HTTPS is enabled.
+  # https-certificate = "/etc/ssl/influxdb.pem"
+
+  # Use a separate private key location.
+  # https-private-key = ""
+
+  # The JWT auth shared secret to validate requests using JSON web tokens.
+  # shared-secret = ""
+
+  # The default chunk size for result sets that should be chunked.
+  # max-row-limit = 0
+
+  # The maximum number of HTTP connections that may be open at once.  New connections that
+  # would exceed this limit are dropped.  Setting this value to 0 disables the limit.
+  # max-connection-limit = 0
+
+  # Enable http service over unix domain socket
+  # unix-socket-enabled = false
+
+  # The path of the unix domain socket.
+  # bind-socket = "/var/run/influxdb.sock"
+
+  # The maximum size of a client request body, in bytes. Setting this value to 0 disables the limit.
+  # max-body-size = 25000000
+
+
+###
+### [ifql]
+###
+### Configures the ifql RPC API.
+###
+
+[ifql]
+  # Determines whether the RPC service is enabled.
+  # enabled = true
+
+  # Determines whether additional logging is enabled.
+  # log-enabled = true
+
+  # The bind address used by the ifql RPC service.
+  # bind-address = ":8082"
+
+
+###
+### [logging]
+###
+### Controls how the logger emits logs to the output.
+###
+
+[logging]
+  # Determines which log encoder to use for logs. Available options
+  # are auto, logfmt, and json. auto will use a more a more user-friendly
+  # output format if the output terminal is a TTY, but the format is not as
+  # easily machine-readable. When the output is a non-TTY, auto will use
+  # logfmt.
+  # format = "auto"
+
+  # Determines which level of logs will be emitted. The available levels
+  # are error, warn, info, and debug. Logs that are equal to or above the
+  # specified level will be emitted.
+  # level = "info"
+
+  # Suppresses the logo output that is printed when the program is started.
+  # The logo is always suppressed if STDOUT is not a TTY.
+  # suppress-logo = false
+
+###
+### [subscriber]
+###
+### Controls the subscriptions, which can be used to fork a copy of all data
+### received by the InfluxDB host.
+###
+
+[subscriber]
+  # Determines whether the subscriber service is enabled.
+  # enabled = true
+
+  # The default timeout for HTTP writes to subscribers.
+  # http-timeout = "30s"
+
+  # Allows insecure HTTPS connections to subscribers.  This is useful when testing with self-
+  # signed certificates.
+  # insecure-skip-verify = false
+
+  # The path to the PEM encoded CA certs file. If the empty string, the default system certs will be used
+  # ca-certs = ""
+
+  # The number of writer goroutines processing the write channel.
+  # write-concurrency = 40
+
+  # The number of in-flight writes buffered in the write channel.
+  # write-buffer-size = 1000
+
+
+###
+### [[udp]]
+###
+### Controls the listeners for InfluxDB line protocol data via UDP.
+###
+
+[[udp]]
+  enabled = true
+  bind-address = "node2:8089"
+  # database = "udp"
+  # retention-policy = ""
+
+  # These next lines control how batching works. You should have this enabled
+  # otherwise you could get dropped metrics or poor performance. Batching
+  # will buffer points in memory if you have many coming in.
+
+  # Flush if this many points get buffered
+  # batch-size = 5000
+
+  # Number of batches that may be pending in memory
+  # batch-pending = 10
+
+  # Will flush at least this often even if we haven't hit buffer limit
+  # batch-timeout = "1s"
+
+  # UDP Read buffer size, 0 means OS default. UDP listener will fail if set above OS max.
+  # read-buffer = 0
+
+###
+### [continuous_queries]
+###
+### Controls how continuous queries are run within InfluxDB.
+###
+
+[continuous_queries]
+  # Determines whether the continuous query service is enabled.
+  # enabled = true
+
+  # Controls whether queries are logged when executed by the CQ service.
+  # log-enabled = true
+
+  # Controls whether queries are logged to the self-monitoring data store.
+  # query-stats-enabled = false
+
+  # interval for how often continuous queries will be checked if they need to run
+  # run-interval = "1s"
+
+```
+
+The spark metrics system is outputting StatsD to Telegraf which is inputting those metrics to InfluxDB.
+
+#### /opt/spark/conf/metrics.properties
+
+```bash
+
+*.sink.statsd.class=org.apache.spark.metrics.sink.StatsdSink
+*.sink.statsd.prefix=spark
+*.sink.statsd.port=8125
+*.sink.statsd.unit=seconds
+*.sink.statsd.period=3
+*.sink.statsd.host=localhost
+
+*.sink.console.class=org.apache.spark.metrics.sink.ConsoleSink
+*.sink.console.period=3
+*.sink.console.seconds=seconds
+
+master.source.jvm.class=org.apache.spark.metrics.source.JvmSource
+worker.source.jvm.class=org.apache.spark.metrics.source.JvmSource
+driver.source.jvm.class=org.apache.spark.metrics.source.JvmSource
+executor.source.jvm.class=org.apache.spark.metrics.source.JvmSource
+
+```
+
+### Systemd
+
+Everywhere when possible we use Systemd to manage background servers.
+Systemd will ensure that the servers keep running.
+We install the Spark processes as services that will boot up when the server boots up.
+
+#### System for Spark Slave service
+
+```bash
+
+[Unit]
+Description=Apache Spark Master and Slave Servers
+After=network.target
+After=systemd-user-sessions.service
+After=network-online.target
+
+[Service]
+User=spark
+Type=forking
+ExecStart=/opt/spark/sbin/start-slave.sh spark://192.168.50.4:7077
+ExecStop=/opt/spark/sbin/stop-slave.sh spark://192.168.50.4:7077
+TimeoutSec=30
+Restart=on-failure
+RestartSec= 30
+StartLimitInterval=350
+StartLimitBurst=10
+
+[Install]
+WantedBy=multi-user.target
+
+```
 
 
 ## About us
