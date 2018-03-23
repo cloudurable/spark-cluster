@@ -616,3 +616,33 @@ HiveExternalCatalog.fileCacheHits
 
 Chronograf
 http://node2:8888/sources/new?redirectPath=/
+
+
+## About us
+[Cloudurable&trade;: streamline DevOps for Cassandra, Kafka and Spark running on AWS](http://cloudurable.com/) provides AMIs, CloudWatch Monitoring, CloudFormation templates and monitoring tools
+to support [Cassandra, Kafka, Spark in production running in EC2](http://cloudurable.com/services/index.html).
+We also teach for example advanced [Cassandra courses which teach how one could develop, support and deploy Cassandra to production in AWS EC2 for Developers and DevOps](http://cloudurable.com/services/index.html). We offer <a href="http://cloudurable.com/kafka-training/index.html">Kafka training</a>, <a href="http://cloudurable.com/kafka-aws-consulting/index.html">Kafka consulting</a>,
+<a href="http://cloudurable.com/cassandra-course/index.html">Cassandra training</a>, <a href="http://cloudurable.com/kafka-aws-consulting/index.html">Cassandra consulting</a>,
+<a href="http://cloudurable.com/spark-aws-emr-training/index.html">Spark training</a>, and <a href="http://cloudurable.com/spark-aws-emr-consulting/index.html">Spark consulting</a>.
+
+#### More info
+
+Please take some time to read the <a href="http://cloudurable.com/advantages/index.html">Advantage of using Cloudurable&trade;</a>.
+
+Cloudurable provides:
+
+* [Subscription Cassandra support to streamline DevOps](http://cloudurable.com/subscription_support_benefits_cassandra/index.html) ([Support subscription pricing for Cassandra and Kafka in AWS](http://cloudurable.com/subscription_support/index.html))
+* [Cassandra Course](http://cloudurable.com/cassandra-course/index.html)
+* [Cassandra Consulting: Quick Start](http://cloudurable.com/service-quick-start-mentoring-cassandra-or-kafka-aws-ec2/index.html)
+* [Cassandra Consulting: Architecture Analysis](http://cloudurable.com/service-architecture-analysis-cassandra-or-kafka-aws-ec2/index.html)
+
+#### AWS Cassandra Deployment Guides
+
+* <a href="http://cloudurable.com/ppt/amazon-cassandra.pdf">Cloudurable&trade;| Guide to AWS Cassandra Deploy</a>
+* <a href="http://cloudurable.com/ppt/amazon-cassandra-notes.pdf">Cloudurable&trade;| AWS Cassandra Guidelines and Notes</a>
+
+----
+
+<a href="http://cloudurable.com/kafka-training/index.html">Kafka training</a>, <a href="http://cloudurable.com/kafka-aws-consulting/index.html">Kafka consulting</a>,
+<a href="http://cloudurable.com/cassandra-course/index.html">Cassandra training</a>, <a href="http://cloudurable.com/kafka-aws-consulting/index.html">Cassandra consulting</a>,
+<a href="http://cloudurable.com/spark-aws-emr-training/index.html">Spark training</a>, <a href="http://cloudurable.com/spark-aws-emr-consulting/index.html">Spark consulting</a>
