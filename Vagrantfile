@@ -13,11 +13,11 @@ Vagrant.configure("2") do |config|
 
         port_number = i + 4
         ip_address = "192.168.50.#{port_number}"
-        seed_addresses = "192.168.50.4,192.168.50.5,192.168.50.6"
+        #seed_addresses = "192.168.50.4,192.168.50.5,192.168.50.6"
         config.vm.define "node#{i}" do |node|
             node.vm.network "private_network", ip: ip_address
             node.vm.provider "virtualbox" do |vb|
-                   vb.memory = "2048"
+                   vb.memory = "3096"
                    vb.cpus = 4
             end
 

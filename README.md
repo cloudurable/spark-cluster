@@ -1,6 +1,6 @@
-## Set up Spark cluster
+## Spark cluster with metrics
 
-Sample spark cluster, that uses systemd, ansible, centos7, influxdb, statsd, spark metrics system, spark job server and more.
+Sample spark cluster, that uses systemd, ansible, centos7, influxdb, statsd, spark metrics system, spark job server and more to demonstrate how to collect metrics for perf tuning on a dev cluster.
 
 This projects includes template done in Vagrant and Ansible.
 
@@ -8,7 +8,7 @@ You should be able to take this and apply it to your server machines quickly.
 
 The OS is Centos7 which seems like de facto.
 
- The templates and scripts install Spark, Java, configures spark metrics system, spark job history server, ansible, influxdb, telegraf, chronograf and statsd.
+The templates and scripts install Spark, Java, configures spark metrics system, spark job history server, ansible, influxdb, telegraf, chronograf and statsd.
 
 With chronograf, it is easy to setup metrics dashboards too. You could also
 set up grafana to display metrics.
@@ -124,8 +124,80 @@ ansible-playbook playbooks/keyscan.yml
 ```
 
 
+## Spark server layout
 
-## Install notes
+This spark cluster is designed to run on a MacBook pro with 16GB.
+
+There are three nodes in this system.
+
+* node0
+* node1
+* node2
+
+These nodes all run Spark slaves.
+
+They also run some extra servers as follows
+* node0 - spark master, spark history server, spark slave
+* node1 - spark slave, telegraf statsd server
+* node2 - spark slave, InfluxDB, Chronograf
+
+Servers and ports
+* [Node 0 Spark Master Server http://node0:8080/](http://node0:8080/)
+* [Node 0 History Server http://node0:18080/](http://node0:18080/)
+* [Node 2 Chronograf http://node2:8888](http://node2:8888)
+* [Node 0 Slave http://node0:8081/](http://node0:8081/)
+* [Node 1 Slave http://node1:8081/](http://node1:8081/)
+* [Node 2 Slave http://node2:8081/](http://node2:8081/)
+* Node 1 StatsD Server udp://node1:8125
+* Node 2 InfluxDB input udp://node2:8089
+* [Node 2 Influxdb http://node2:8086/ping](http://node2:8086/ping) `curl -v http://node2:8086/ping`
+
+In the real world, these would all run potentially on different servers.
+
+For development and performance tuning locally, we will run them here.
+
+
+### Commands I use often to debug
+
+```bash
+# See Java processes
+ps -ef | grep java
+
+# Kill java processes
+pkill java #systemd will restart spark services
+
+# See status of spark slave node
+systemctl status spark-slave
+
+# See status of spark master
+systemctl status spark-master
+
+# See status of spark history server
+systemctl status spark-history
+
+# Clear Logs
+rm -rf /opt/spark/logs/*
+systemctl restart spark-master
+systemctl restart spark-slave
+systemctl restart spark-history
+
+# Show logs
+ls /opt/spark/logs/
+ spark-spark-org.apache.spark.deploy.history.HistoryServer-1-node0.out
+ spark-spark-org.apache.spark.deploy.master.Master-1-node0.out
+ spark-spark-org.apache.spark.deploy.worker.Worker-1-node0.out
+
+ # Tail history log
+ tail -f /opt/spark/logs/spark-spark-org.apache.spark.deploy.history.HistoryServer-1-node0.out
+
+ # Tail master log
+ tail -f  /opt/spark/logs/spark-spark-org.apache.spark.deploy.master.Master-1-node0.out
+
+ # Tail worker log
+ tail -f /opt/spark/logs/spark-spark-org.apache.spark.deploy.worker.Worker-1-node0.out
+```
+
+## Install notes, not instructions just notes
 
 This section is not anything you have to do, it is what the above scripts did to install this cluster.
 
@@ -234,8 +306,9 @@ cat slaves
 #
 
 # A Spark Worker will be started on each of the machines listed below.
+node0
 node1
-
+node2
 
 ```
 

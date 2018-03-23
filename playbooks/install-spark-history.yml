@@ -1,0 +1,24 @@
+---
+- hosts: node0
+  gather_facts: yes
+  become: true
+  remote_user: ansible
+
+  tasks:
+
+  - name: Create history dir
+    command: "mkdir -p /tmp/spark-events"
+
+  - name: Chown the history dir to spark
+    command: "chown spark -R /tmp/spark-events"
+
+  - name: Copy spark service history file
+    copy:
+      src: ../templates/spark-history.service
+      dest: /etc/systemd/system/spark-history.service
+
+  - name: start spark
+    command: "systemctl start spark-history.service"
+
+  - name: enable spark
+    command: "systemctl enable spark-history.service"
