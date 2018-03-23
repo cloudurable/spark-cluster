@@ -38,4 +38,4 @@
     command: "systemctl restart chronograf"
 
   - name: enable chronograf
-    command: "systemctl enable chronograf"    
+    command: "systemctl enable chronograf"

@@ -1,5 +1,5 @@
 ---
-- hosts: node1
+- hosts: nodes
   gather_facts: yes
   become: true
   remote_user: ansible
@@ -20,11 +20,18 @@
 
   - name: Copy telegraf conf to node1
     copy:
+      src: ../templates/telegraf-statsd.conf
+      dest: /etc/telegraf/telegraf.conf
+    when: ansible_nodename == "node1"
+
+  - name: Copy telegraf conf to node0 and node2
+    copy:
       src: ../templates/telegraf.conf
       dest: /etc/telegraf/telegraf.conf
+    when: ansible_nodename != "node1"
 
   - name: start telegraf
-    command: "systemctl start telegraf"
+    command: "systemctl restart telegraf"
 
   - name: enable telegraf
     command: "systemctl enable telegraf"

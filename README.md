@@ -687,8 +687,27 @@ HiveExternalCatalog.fileCacheHits
 
 ## InfluxDB and friends
 
-Chronograf
-http://node2:8888/sources/new?redirectPath=/
+
+Telegraf
+https://docs.influxdata.com/telegraf/v1.5/plugins/inputs/
+
+System input
+https://github.com/influxdata/telegraf/tree/release-1.5/plugins/inputs/system
+
+Disk input
+https://github.com/influxdata/telegraf/blob/release-1.5/plugins/inputs/system/DISK_README.md
+
+CPU input
+https://github.com/influxdata/telegraf/blob/release-1.5/plugins/inputs/system/CPU_README.md
+
+Memory input
+https://github.com/influxdata/telegraf/blob/release-1.5/plugins/inputs/system/MEM_README.md
+
+System
+https://github.com/influxdata/telegraf/blob/release-1.5/plugins/inputs/system/SYSTEM_README.md
+
+
+
 
 
 ## About us

@@ -1,0 +1,11 @@
+---
+- hosts: nodes
+  gather_facts: yes
+  become: true
+  remote_user: ansible
+
+  tasks:
+  - name: Copy some script example
+    copy:
+      src: ../resources/bin/setup-host.sh
+      dest: /vagrant/resources/bin/setup-host.sh
