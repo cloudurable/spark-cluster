@@ -1,0 +1,41 @@
+---
+- hosts: node2
+  gather_facts: yes
+  become: true
+  remote_user: ansible
+
+  tasks:
+  - name: Create conf dir for telegraf
+    command: "mkdir -p /etc/influxdb/"
+
+  - name: Copy telegraf and influxdb rpm repo to node2
+    copy:
+      src: ../templates/influxdb.repo
+      dest: /etc/yum.repos.d/influxdb.repo
+
+  - name: yum install influxdb
+    yum:
+      name: influxdb
+      state: latest
+
+  - name: yum install chronograf
+    yum:
+      name: chronograf
+      state: latest
+
+  - name: Copy influxdb conf to node2
+    copy:
+      src: ../templates/influxdb.conf
+      dest: /etc/influxdb/influxdb.conf
+
+  - name: start influxdb
+    command: "systemctl restart influxdb"
+
+  - name: enable influxdb
+    command: "systemctl enable influxdb"
+
+  - name: start chronograf
+    command: "systemctl restart chronograf"
+
+  - name: enable chronograf
+    command: "systemctl enable chronograf"    

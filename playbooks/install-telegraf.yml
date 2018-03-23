@@ -1,0 +1,30 @@
+---
+- hosts: node1
+  gather_facts: yes
+  become: true
+  remote_user: ansible
+
+  tasks:
+  - name: Create conf dir for telegraf
+    command: "mkdir -p /etc/telegraf/"
+
+  - name: Copy telegraf and influxdb rpm repo to node1
+    copy:
+      src: ../templates/influxdb.repo
+      dest: /etc/yum.repos.d/influxdb.repo
+
+  - name: yum install telegraf
+    yum:
+      name: telegraf
+      state: latest
+
+  - name: Copy telegraf conf to node1
+    copy:
+      src: ../templates/telegraf.conf
+      dest: /etc/telegraf/telegraf.conf
+
+  - name: start telegraf
+    command: "systemctl start telegraf"
+
+  - name: enable telegraf
+    command: "systemctl enable telegraf"

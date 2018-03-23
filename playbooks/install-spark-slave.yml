@@ -1,0 +1,32 @@
+---
+- hosts: slaves
+  gather_facts: yes
+  become: true
+  remote_user: ansible
+
+  tasks:
+  - name: Create opt dir
+    command: "mkdir -p /opt/"
+
+  - name: Install Spark Dist
+    command: "cp -R /vagrant/resources/dist/spark-2.3.0-bin-hadoop2.7/ /opt/spark"
+
+  - name: create spark user
+    command: "/vagrant/resources/bin/setup-spark-user.sh"
+
+  - name: Create spark-env.sh
+    template:
+      src: ../templates/spark-env.sh.j2
+      dest: /opt/spark/conf/spark-env.sh
+
+
+  - name: Copy spark service file
+    copy:
+      src: ../templates/spark-slave.service
+      dest: /etc/systemd/system/spark-slave.service
+
+  - name: start spark
+    command: "systemctl start spark-slave.service"
+
+  - name: enable spark
+    command: "systemctl enable spark-slave.service"

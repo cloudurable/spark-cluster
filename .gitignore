@@ -1,0 +1,7 @@
+.idea/
+resources/dist/
+.vagrant/
+*.retry
+*.tgz
+resources/server/certs/spark_rsa*
+templates/wikipedia.dat

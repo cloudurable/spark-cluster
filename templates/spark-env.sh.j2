@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# spark-env.sh created with ansible
+
+SPARK_LOCAL_IP={{ansible_eth1.ipv4.address}}
+SPARK_PUBLIC_DNS={{ ansible_nodename }}
+
+{% if ansible_nodename == "node0" %}
+SPARK_MASTER_HOST=node0
+{% endif %}

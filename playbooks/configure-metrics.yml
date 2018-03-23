@@ -1,0 +1,16 @@
+---
+- hosts: nodes
+  gather_facts: yes
+  become: true
+  remote_user: ansible
+
+  tasks:
+  - name: Copy metrics conf to nodes
+    copy:
+      src: ../templates/metrics.properties
+      dest: /opt/spark/conf/metrics.properties
+  - name: restart spark slave
+    command: "systemctl restart spark-slave.service"
+  - name: restart spark master if node0
+    command: "systemctl restart spark-master.service"
+    when: ansible_nodename == "node0"

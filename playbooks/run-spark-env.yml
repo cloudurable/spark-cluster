@@ -1,0 +1,11 @@
+---
+- hosts: nodes
+  gather_facts: yes
+  become: true
+  remote_user: ansible
+
+  tasks:
+  - name: Create spark-env.sh
+    template:
+      src: ../templates/spark-env.sh.j2
+      dest: /home/ansible/spark-env.sh

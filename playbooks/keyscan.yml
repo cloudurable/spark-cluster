@@ -1,0 +1,8 @@
+---
+- hosts: all
+  gather_facts: no
+  remote_user: ansible
+
+  tasks:
+  - name: Keyscan
+    command: "/vagrant/resources/bin/run-keyscan.sh"

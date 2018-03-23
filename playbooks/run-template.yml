@@ -1,0 +1,11 @@
+---
+- hosts: node0
+  gather_facts: yes
+  become: true
+  remote_user: ansible
+
+  tasks:
+  - name: sample template
+    template:
+      src: ../templates/foo.j2
+      dest: /home/ansible/foo.txt

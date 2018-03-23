@@ -1,0 +1,31 @@
+---
+- hosts: nodes
+  gather_facts: no
+  become: true
+  remote_user: ansible
+
+  tasks:
+    - name: epel-release
+      yum:
+        name: epel-release
+        state: latest
+
+    - name: wget
+      yum:
+        name: wget
+        state: latest
+
+    - name: ntp
+      yum:
+        name: ntp
+        state: latest
+
+    - name: java-1.8.0-openjdk
+      yum:
+        name: java-1.8.0-openjdk
+        state: latest
+
+    - name: net-tools
+      yum:
+        name: net-tools
+        state: latest
