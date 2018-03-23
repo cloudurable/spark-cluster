@@ -1,5 +1,8 @@
 ## Spark cluster with metrics
 
+![Spark Metrics Dashboard](https://raw.githubusercontent.com/cloudurable/spark-cluster/master/images/spark-metric-dashboard.png)
+
+
 Sample spark cluster, that uses systemd, ansible, centos7, influxdb, statsd, spark metrics system, spark job server and more to demonstrate how to collect metrics for perf tuning on a dev cluster.
 
 This projects includes template done in Vagrant and Ansible.
